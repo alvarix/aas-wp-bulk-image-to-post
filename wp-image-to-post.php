@@ -2,10 +2,10 @@
 /*
 Plugin Name: Bulk Image to Post Converter
 Description: Creates posts from selected media images using image titles as post titles
-Version: 1.1
+Version: 1.2
 Author: Alvar Sirlin
+Author URI: https://alvarsirlin.com
 */
-
 
 if (!defined('ABSPATH')) {
     exit;
@@ -93,6 +93,8 @@ class BulkImageToPostConverter {
 
     public function render_admin_page() {
         $post_types = $this->get_available_post_types();
+        $current_post_type = get_post_type_object($this->selected_post_type);
+        $status_display = ucfirst($this->publish_status);
         ?>
         <div class="wrap">
             <h1>Image to Post Converter</h1>
@@ -136,6 +138,12 @@ class BulkImageToPostConverter {
                     </table>
                     <?php submit_button('Save Settings'); ?>
                 </form>
+            </div>
+
+            <div class="current-settings">
+                <h2>Current Settings</h2>
+                <p>Selected Post Type: <strong><?php echo esc_html($current_post_type->labels->singular_name); ?></strong></p>
+                <p>Publication Status: <strong><?php echo esc_html($status_display); ?></strong></p>
             </div>
 
             <div class="image-to-post-container">
@@ -193,5 +201,5 @@ class BulkImageToPostConverter {
     }
 }
 
+// Initialize the plugin
 new BulkImageToPostConverter();
-?>

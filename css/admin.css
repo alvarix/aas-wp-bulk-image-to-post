@@ -7,6 +7,28 @@
     box-shadow: 0 1px 1px rgba(0,0,0,.04);
 }
 
+.current-settings {
+    margin: 20px 0;
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-left: 4px solid #2271b1;
+}
+
+.current-settings h2 {
+    margin-top: 0;
+    font-size: 1.2em;
+    color: #1d2327;
+}
+
+.current-settings p {
+    margin: 0.5em 0;
+    color: #50575e;
+}
+
+.current-settings strong {
+    color: #2271b1;
+}
+
 .image-to-post-container {
     margin-top: 20px;
     padding: 20px;
