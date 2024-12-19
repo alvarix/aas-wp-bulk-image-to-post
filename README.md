@@ -37,4 +37,4 @@ This project is licensed under the GPL v2 or later
 
 ## Author
 
-[Your Name]
+[Alvar Sirlin](https://alvarsirlin.com)
