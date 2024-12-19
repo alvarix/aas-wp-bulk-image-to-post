@@ -6,25 +6,36 @@ Version: 1.1
 Author: Alvar Sirlin
 */
 
+
 if (!defined('ABSPATH')) {
     exit;
 }
 
 class BulkImageToPostConverter {
     private $selected_post_type;
+    private $publish_status;
     private $options_key = 'bulk_image_converter_options';
 
     public function __construct() {
         $this->selected_post_type = get_option($this->options_key . '_post_type', 'post');
+        $this->publish_status = get_option($this->options_key . '_publish_status', 'draft');
         
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('wp_ajax_bulk_create_posts', array($this, 'handle_bulk_create_posts'));
         add_action('admin_init', array($this, 'register_settings'));
+        add_filter('plugin_action_links_' . plugin_basename(__FILE__), array($this, 'add_settings_link'));
     }
 
     public function register_settings() {
         register_setting($this->options_key, $this->options_key . '_post_type');
+        register_setting($this->options_key, $this->options_key . '_publish_status');
+    }
+
+    public function add_settings_link($links) {
+        $settings_link = '<a href="admin.php?page=image-to-post">' . __('Settings') . '</a>';
+        array_unshift($links, $settings_link);
+        return $links;
     }
 
     public function get_available_post_types() {
@@ -34,8 +45,6 @@ class BulkImageToPostConverter {
         );
         
         $post_types = get_post_types($args, 'objects');
-        
-        // Add default post type
         $post_types = array_merge(
             array('post' => get_post_type_object('post')),
             $post_types
@@ -65,19 +74,20 @@ class BulkImageToPostConverter {
             'image-to-post-admin',
             plugin_dir_url(__FILE__) . 'css/admin.css',
             array(),
-            '1.1'
+            '1.2'
         );
         wp_enqueue_script(
             'image-to-post',
             plugin_dir_url(__FILE__) . 'js/admin.js',
             array('jquery'),
-            '1.1',
+            '1.2',
             true
         );
 
         wp_localize_script('image-to-post', 'imageToPost', array(
             'ajaxurl' => admin_url('admin-ajax.php'),
-            'nonce' => wp_create_nonce('image-to-post-nonce')
+            'nonce' => wp_create_nonce('image-to-post-nonce'),
+            'publishStatus' => $this->publish_status
         ));
     }
 
@@ -107,8 +117,24 @@ class BulkImageToPostConverter {
                                 </select>
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="publish-status">Publication Status:</label>
+                            </th>
+                            <td>
+                                <select name="<?php echo $this->options_key . '_publish_status'; ?>" 
+                                        id="publish-status">
+                                    <option value="draft" <?php selected($this->publish_status, 'draft'); ?>>
+                                        Save as Draft
+                                    </option>
+                                    <option value="publish" <?php selected($this->publish_status, 'publish'); ?>>
+                                        Publish Immediately
+                                    </option>
+                                </select>
+                            </td>
+                        </tr>
                     </table>
-                    <?php submit_button('Save Post Type'); ?>
+                    <?php submit_button('Save Settings'); ?>
                 </form>
             </div>
 
@@ -145,7 +171,7 @@ class BulkImageToPostConverter {
 
             $post_data = array(
                 'post_title' => $title,
-                'post_status' => 'draft',
+                'post_status' => $this->publish_status,
                 'post_type' => $this->selected_post_type,
                 'post_content' => '',
             );
@@ -157,7 +183,8 @@ class BulkImageToPostConverter {
                 $created_posts[] = array(
                     'post_id' => $post_id,
                     'title' => $title,
-                    'post_type' => $this->selected_post_type
+                    'post_type' => $this->selected_post_type,
+                    'status' => $this->publish_status
                 );
             }
         }

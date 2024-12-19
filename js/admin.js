@@ -1,3 +1,4 @@
+// js/admin.js
 jQuery(document).ready(function($) {
     let selectedImages = [];
 
@@ -35,7 +36,8 @@ jQuery(document).ready(function($) {
         e.preventDefault();
         
         const $status = $('#conversion-status');
-        $status.html('<p>Creating posts...</p>');
+        const statusText = imageToPost.publishStatus === 'publish' ? 'Publishing' : 'Creating drafts';
+        $status.html(`<p>${statusText}...</p>`);
 
         $.ajax({
             url: imageToPost.ajaxurl,
@@ -48,15 +50,17 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     const posts = response.data;
+                    const statusMessage = imageToPost.publishStatus === 'publish' ? 
+                        'published' : 'created as drafts';
                     $status.html(
-                        `<p>Successfully created ${posts.length} posts.</p>`
+                        `<p class="success-message">Successfully ${statusMessage} ${posts.length} posts.</p>`
                     );
                 } else {
-                    $status.html('<p>Error creating posts.</p>');
+                    $status.html('<p class="error-message">Error creating posts.</p>');
                 }
             },
             error: function() {
-                $status.html('<p>Error creating posts.</p>');
+                $status.html('<p class="error-message">Error creating posts.</p>');
             }
         });
     });
