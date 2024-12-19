@@ -2,23 +2,46 @@
 /*
 Plugin Name: Bulk Image to Post Converter
 Description: Creates posts from selected media images using image titles as post titles
-Version: 1.0
-Author: Your Name
+Version: 1.1
+Author: Alvar Sirlin
 */
 
-// Prevent direct access
 if (!defined('ABSPATH')) {
     exit;
 }
 
 class BulkImageToPostConverter {
-    private $post_type;
+    private $selected_post_type;
+    private $options_key = 'bulk_image_converter_options';
 
     public function __construct() {
-        $this->post_type = 'illo'; // Change this to your desired post type
+        $this->selected_post_type = get_option($this->options_key . '_post_type', 'post');
+        
         add_action('admin_menu', array($this, 'add_admin_menu'));
         add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
         add_action('wp_ajax_bulk_create_posts', array($this, 'handle_bulk_create_posts'));
+        add_action('admin_init', array($this, 'register_settings'));
+    }
+
+    public function register_settings() {
+        register_setting($this->options_key, $this->options_key . '_post_type');
+    }
+
+    public function get_available_post_types() {
+        $args = array(
+            'public' => true,
+            '_builtin' => false
+        );
+        
+        $post_types = get_post_types($args, 'objects');
+        
+        // Add default post type
+        $post_types = array_merge(
+            array('post' => get_post_type_object('post')),
+            $post_types
+        );
+
+        return $post_types;
     }
 
     public function add_admin_menu() {
@@ -38,11 +61,17 @@ class BulkImageToPostConverter {
         }
 
         wp_enqueue_media();
+        wp_enqueue_style(
+            'image-to-post-admin',
+            plugin_dir_url(__FILE__) . 'css/admin.css',
+            array(),
+            '1.1'
+        );
         wp_enqueue_script(
             'image-to-post',
             plugin_dir_url(__FILE__) . 'js/admin.js',
             array('jquery'),
-            '1.0',
+            '1.1',
             true
         );
 
@@ -53,13 +82,42 @@ class BulkImageToPostConverter {
     }
 
     public function render_admin_page() {
+        $post_types = $this->get_available_post_types();
         ?>
         <div class="wrap">
             <h1>Image to Post Converter</h1>
+            
+            <div class="post-type-selection">
+                <form method="post" action="options.php">
+                    <?php settings_fields($this->options_key); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">
+                                <label for="post-type-select">Select Post Type:</label>
+                            </th>
+                            <td>
+                                <select name="<?php echo $this->options_key . '_post_type'; ?>" 
+                                        id="post-type-select">
+                                    <?php foreach ($post_types as $type): ?>
+                                        <option value="<?php echo esc_attr($type->name); ?>"
+                                                <?php selected($this->selected_post_type, $type->name); ?>>
+                                            <?php echo esc_html($type->labels->singular_name); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                    <?php submit_button('Save Post Type'); ?>
+                </form>
+            </div>
+
             <div class="image-to-post-container">
                 <button id="select-images" class="button button-primary">Select Images</button>
                 <div id="selected-images"></div>
-                <button id="create-posts" class="button button-primary" style="display:none;">Create Posts</button>
+                <button id="create-posts" class="button button-primary" style="display:none;">
+                    Create Posts
+                </button>
                 <div id="conversion-status"></div>
             </div>
         </div>
@@ -83,25 +141,23 @@ class BulkImageToPostConverter {
                 continue;
             }
 
-            // Get image title without extension
             $title = pathinfo($attachment->post_title, PATHINFO_FILENAME);
 
-            // Create post
             $post_data = array(
                 'post_title' => $title,
                 'post_status' => 'draft',
-                'post_type' => $this->post_type,
+                'post_type' => $this->selected_post_type,
                 'post_content' => '',
             );
 
             $post_id = wp_insert_post($post_data);
 
             if (!is_wp_error($post_id)) {
-                // Set featured image
                 set_post_thumbnail($post_id, $image_id);
                 $created_posts[] = array(
                     'post_id' => $post_id,
-                    'title' => $title
+                    'title' => $title,
+                    'post_type' => $this->selected_post_type
                 );
             }
         }
@@ -110,6 +166,5 @@ class BulkImageToPostConverter {
     }
 }
 
-// Initialize the plugin
 new BulkImageToPostConverter();
 ?>

@@ -1,0 +1,33 @@
+/* css/admin.css */
+.post-type-selection {
+    margin: 20px 0;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.image-to-post-container {
+    margin-top: 20px;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+#selected-images {
+    margin: 15px 0;
+}
+
+#conversion-status {
+    margin-top: 15px;
+    padding: 10px;
+}
+
+.success-message {
+    color: #46b450;
+}
+
+.error-message {
+    color: #dc3232;
+}
